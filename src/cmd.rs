@@ -1,88 +1,87 @@
 use std::env::Args;
 
-pub struct RunOptions {
-    pub exit: bool,
-    pub new: Option<String>,
-    pub import: Option<String>,
-    pub image: Option<String>
+pub enum RunOptions {
+    Exit,
+    New(String),
+    Import(String, Option<String>),
+    List,
 }
 
 #[inline(always)]
 pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
-    let mut run_options = RunOptions {
-        exit: false,
-        new: None,
-        import: None,
-        image: None
-    };
-
     if args.len() == 0 {
         print_usage();
 
-        run_options.exit = true;
-        return Ok(run_options);
+        return Ok(RunOptions::Exit);
     }
+
+    let mut output = RunOptions::Exit;
 
     while let Some(arg) = args.next() {
         if arg.eq("-v") || arg.eq("--version") {
             print_version();
 
-            run_options.exit = true;
-            return Ok(run_options);
+            return Ok(RunOptions::Exit);
         } else if arg.eq("-n") || arg.eq("--new") {
-            run_options.new = match args.next() {
-                Some(t) => Some(t),
+            output = RunOptions::New(match args.next() {
+                Some(t) => t,
                 None => {
                     print_usage();
 
-                    run_options.exit = true;
-                    return Ok(run_options);
+                    return Ok(RunOptions::Exit);
                 }
-            };
+            });
 
             continue;
-
         } else if arg.eq("-I") || arg.eq("--import") {
-            run_options.import = match args.next() {
-                Some(t) => Some(t),
-                None => {
-                    print_usage();
+            output = RunOptions::Import(
+                match args.next() {
+                    Some(t) => t,
+                    None => {
+                        print_usage();
 
-                    run_options.exit = true;
-                    return Ok(run_options);
-                }
-            };
+                        return Ok(RunOptions::Exit);
+                    }
+                },
+                None,
+            );
 
             continue;
         } else if arg.eq("-i") || arg.eq("--image") {
-            run_options.image = match args.next() {
-                Some(t) => Some(t),
-                None => {
-                    print_usage();
+            if let RunOptions::Import(_, image) = &mut output {
+                *image = match args.next() {
+                    Some(t) => Some(t),
+                    None => {
+                        print_usage();
 
-                    run_options.exit = true;
-                    return Ok(run_options);
-                }
-            };
+                        return Ok(RunOptions::Exit);
+                    }
+                };
+            } else {
+                print_usage();
+
+                return Ok(RunOptions::Exit);
+            }
 
             continue;
+        } else if arg.eq("-l") || arg.eq("--list") {
+            return Ok(RunOptions::List);
         } else {
             print_usage();
 
-            run_options.exit = true;
-            return Ok(run_options);
+            return Ok(RunOptions::Exit);
         }
     }
 
-    Ok(run_options)
+    Ok(output)
 }
 
 #[inline(always)]
-fn print_version() {
+pub fn print_version() {
     println!("Laboratory v0.1.0");
 }
 
 #[inline(always)]
-fn print_usage() {
+pub fn print_usage() {
     println!("Usage:");
 }

@@ -2,13 +2,10 @@ mod cmd;
 mod image;
 mod manager;
 
-use std::env::{self, args};
+use std::env::args;
 
-use cmd::parse_args;
-use image::Lab;
-use manager::Cache;
-
-const CACHE_PATH_APPDATA: &str = "laboratory\\Cache.toml";
+use cmd::{parse_args, print_usage, RunOptions::*};
+use manager::manage;
 
 fn main() -> Result<(), String> {
     let mut args = args();
@@ -16,30 +13,24 @@ fn main() -> Result<(), String> {
 
     let run_options = parse_args(args)?;
 
-    if run_options.exit {
-        return Ok(());
-    }
-
-    if let Some(lab_name) = run_options.new {
-        println!("name = {}", lab_name);
-    } else if let Some(config) = run_options.import {
-        if let Some(image) = run_options.image {
-            let mut lab = Lab::from_image(image);
-
-            lab.read_config(&config)?;
-
-            let cache_path = cache_path();
-
-            let mut cache = Cache::load(&cache_path)?;
-
-            cache.add(lab);
-            cache.sync(&cache_path)?;
+    match run_options {
+        Exit => {
+            return Ok(());
         }
-    }
+        New(lab_name) => {
+            println!("name = {}", lab_name);
+        }
+        Import(config, image) => {
+            if let Some(image) = image {
+                manage::import_lab(image, config)?;
+            } else {
+                print_usage();
+            }
+        }
+        List => {
+
+        }
+    };
 
     Ok(())
-}
-
-fn cache_path() -> String {
-    env::var("APPDATA").unwrap() + "\\" + CACHE_PATH_APPDATA
 }
