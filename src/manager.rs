@@ -1,7 +1,6 @@
 mod cache {
     use std::{
-        fs::OpenOptions,
-        io::{ErrorKind, Read, Write},
+        fs::{create_dir_all, OpenOptions}, io::{ErrorKind, Read, Write}, path::Path, vec::IntoIter,
     };
 
     use serde::{Deserialize, Serialize};
@@ -19,8 +18,10 @@ mod cache {
     }
 
     impl Cache {
-        // cannot handle missing folder yet
         pub fn new(path: String) -> Result<Self, String> {
+            let prefix = Path::new(&path).parent().unwrap();
+            create_dir_all(prefix).str_result()?;
+
             let mut file = OpenOptions::new()
                 .write(true)
                 .create(true)
@@ -104,6 +105,15 @@ mod cache {
             self.data.labs.push(lab);
         }
     }
+
+    impl IntoIterator for Cache {
+        type Item = Lab;
+        type IntoIter = IntoIter<Self::Item>;
+    
+        fn into_iter(self) -> Self::IntoIter {
+            self.data.labs.into_iter()
+        }
+    }
 }
 
 pub mod manage {
@@ -124,6 +134,23 @@ pub mod manage {
 
         cache.add(lab);
         cache.write()
+    }
+
+    pub fn list() -> Result<(), String> {
+        let cache = Cache::load(cache_path())?;
+
+        for lab in cache {
+            match lab.config {
+                Some(config) => {
+                    println!("{}", config.name);
+                }
+                None => {
+                    continue;
+                }
+            }
+        }
+
+        Ok(())
     }
 
     #[inline(always)]

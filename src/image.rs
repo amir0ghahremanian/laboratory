@@ -8,16 +8,16 @@ use toml::de::Error;
 
 #[derive(Serialize, Deserialize)]
 pub struct Lab {
-    image_path: Option<String>,
-    expanded_path: Option<String>,
-    drive_letter: Option<String>,
-    config: Option<LabConfig>,
+    pub image_path: Option<String>,
+    pub expanded_path: Option<String>,
+    pub drive_letter: Option<String>,
+    pub config: Option<LabConfig>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct LabConfig {
-    name: String,
-    apps: Vec<App>,
+    pub name: String,
+    pub apps: Vec<App>,
 }
 
 #[derive(Serialize, Deserialize)]

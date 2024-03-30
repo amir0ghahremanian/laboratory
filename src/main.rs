@@ -14,9 +14,7 @@ fn main() -> Result<(), String> {
     let run_options = parse_args(args)?;
 
     match run_options {
-        Exit => {
-            return Ok(());
-        }
+        Exit => {}
         New(lab_name) => {
             println!("name = {}", lab_name);
         }
@@ -28,7 +26,7 @@ fn main() -> Result<(), String> {
             }
         }
         List => {
-
+            manage::list()?;
         }
     };
 
