@@ -78,21 +78,21 @@ mod cache {
             })
         }
 
-        pub fn read(&mut self) -> Result<(), String> {
-            let mut file = OpenOptions::new().read(true).open(&self.path).str_result()?;
+        // pub fn read(&mut self) -> Result<(), String> {
+        //     let mut file = OpenOptions::new().read(true).open(&self.path).str_result()?;
 
-            let cache_data: CacheData = {
-                let mut toml = String::new();
+        //     let cache_data: CacheData = {
+        //         let mut toml = String::new();
 
-                file.read_to_string(&mut toml).str_result()?;
+        //         file.read_to_string(&mut toml).str_result()?;
 
-                toml::from_str(&toml).str_result()?
-            };
+        //         toml::from_str(&toml).str_result()?
+        //     };
 
-            self.data = cache_data;
+        //     self.data = cache_data;
 
-            Ok(())
-        }
+        //     Ok(())
+        // }
 
         pub fn write(&self) -> Result<(), String> {
             let mut file = OpenOptions::new()
@@ -193,6 +193,19 @@ pub mod manage {
                     continue;
                 }
             }
+        }
+
+        Ok(())
+    }
+
+    pub fn list_apps(name: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        let lab = cache.search(&name)?;
+        let config = lab.config.as_ref().unwrap();
+
+        for app in &config.apps {
+            println!("{}", app.name);
         }
 
         Ok(())

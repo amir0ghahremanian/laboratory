@@ -2,9 +2,9 @@ use std::env::Args;
 
 pub enum RunOptions {
     Exit,
-    New(String),
     Import(String, Option<String>),
     List,
+    ListApps(String),
     Run(String, Option<String>, Option<String>),
     Change(String, Option<String>),
     Expand(String, Option<String>),
@@ -25,13 +25,6 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             print_version();
 
             return Ok(RunOptions::Exit);
-        } else if arg.eq("-n") || arg.eq("--new") {
-            output = RunOptions::New(match args.next() {
-                Some(t) => t,
-                None => { usage_and_return!(); }
-            });
-
-            continue;
         } else if arg.eq("-I") || arg.eq("--import") {
             output = RunOptions::Import(
                 match args.next() {
@@ -150,6 +143,13 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             });
 
             continue;
+        } else if arg.eq("-L") || arg.eq("--list-apps") {
+            output = RunOptions::ListApps(match args.next() {
+                Some(t) => t,
+                None => { usage_and_return!(); }
+            });
+
+            continue;
         } else if arg.eq("-l") || arg.eq("--list") {
             return Ok(RunOptions::List);
         } else { usage_and_return!(); }
@@ -160,7 +160,7 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
 
 #[inline(always)]
 pub fn print_version() {
-    println!("Laboratory v0.1.0");
+    println!("Laboratory v0.1.1");
 }
 
 #[inline(always)]

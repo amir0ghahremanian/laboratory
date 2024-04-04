@@ -15,9 +15,6 @@ fn main() -> Result<(), String> {
 
     match run_options {
         Exit => {}
-        New(lab_name) => {
-            println!("name = {}", lab_name);
-        }
         Import(config, image) => {
             manage::import_lab(
                 match image {
@@ -29,6 +26,9 @@ fn main() -> Result<(), String> {
         }
         List => {
             manage::list()?;
+        }
+        ListApps(name) => {
+            manage::list_apps(name)?;
         }
         Run(name, app, drive_letter) => {
             manage::run(

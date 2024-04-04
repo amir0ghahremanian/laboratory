@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     fs::{remove_dir_all, OpenOptions},
-    io::{self, Read, Write},
+    io::{self, Read},
     process::{Child, Command},
 };
 
@@ -25,7 +25,7 @@ pub struct LabConfig {
 
 #[derive(Serialize, Deserialize)]
 pub struct App {
-    name: String,
+    pub name: String,
     command: String,
     work_dir: String,
     envs: Vec<Env>,
@@ -48,15 +48,15 @@ impl Lab {
         }
     }
 
-    #[inline(always)]
-    pub fn from_expanded(path: String) -> Self {
-        Self {
-            image_path: None,
-            expanded_path: Some(path),
-            drive_letter: None,
-            config: None,
-        }
-    }
+    // #[inline(always)]
+    // pub fn from_expanded(path: String) -> Self {
+    //     Self {
+    //         image_path: None,
+    //         expanded_path: Some(path),
+    //         drive_letter: None,
+    //         config: None,
+    //     }
+    // }
 
     pub fn read_config(&mut self, path: &str) -> Result<(), String> {
         let mut file = OpenOptions::new().read(true).open(path).str_result()?;
@@ -74,25 +74,25 @@ impl Lab {
         Ok(())
     }
 
-    pub fn write_config(&self, path: &str) -> Result<(), String> {
-        if let Some(config) = &self.config {
-            let mut file = OpenOptions::new()
-                .write(true)
-                .create(true)
-                .truncate(true)
-                .open(path)
-                .str_result()?;
+    // pub fn write_config(&self, path: &str) -> Result<(), String> {
+    //     if let Some(config) = &self.config {
+    //         let mut file = OpenOptions::new()
+    //             .write(true)
+    //             .create(true)
+    //             .truncate(true)
+    //             .open(path)
+    //             .str_result()?;
 
-            let toml = toml::to_string(config).unwrap();
+    //         let toml = toml::to_string(config).unwrap();
 
-            file.write_all(toml.as_bytes()).str_result()?;
-            file.sync_all().str_result()?;
+    //         file.write_all(toml.as_bytes()).str_result()?;
+    //         file.sync_all().str_result()?;
 
-            return Ok(());
-        }
+    //         return Ok(());
+    //     }
 
-        Err("No config to write!".to_string())
-    }
+    //     Err("No config to write!".to_string())
+    // }
 
     pub fn repack(&mut self) -> Result<(), String> {
         if let Some(expanded_path) = &self.expanded_path {
