@@ -137,6 +137,26 @@ mod cache {
 
             Err("Lab not found!".to_string())
         }
+
+        pub fn remove(&mut self, name: &str) -> Result<(), String> {
+            let index = self.data.labs.iter().position(|x| {
+                if let Some(config) = &x.config {
+                    return config.name.eq(name);
+                }
+
+                false
+            });
+
+            match index {
+                Some(index) => {
+                    self.data.labs.remove(index);
+                    Ok(())
+                }
+                None => {
+                    Err("Lab not found!".to_string())
+                }
+            }
+        }
     }
 }
 
@@ -211,6 +231,26 @@ pub mod manage {
         let lab = cache.search(&name)?;
         lab.expand(analyze_path(path)?)?;
 
+        cache.write()?;
+
+        Ok(())
+    }
+
+    pub fn repack(name: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        let lab = cache.search(&name)?;
+        lab.repack()?;
+
+        cache.write()?;
+
+        Ok(())
+    }
+
+    pub fn remove(name: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        cache.remove(&name)?;
         cache.write()?;
 
         Ok(())

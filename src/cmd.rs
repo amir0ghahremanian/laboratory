@@ -8,6 +8,8 @@ pub enum RunOptions {
     Run(String, Option<String>, Option<String>),
     Change(String, Option<String>),
     Expand(String, Option<String>),
+    Repack(String),
+    Remove(String),
     Mount(String, Option<String>),
     Unmount(String)
 }
@@ -54,7 +56,7 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             } else { usage_and_return!(); }
 
             continue;
-        } else if arg.eq("-r") || arg.eq("--run") {
+        } else if arg.eq("-R") || arg.eq("--run") {
             output = RunOptions::Run(
                 match args.next() {
                     Some(t) => t,
@@ -129,6 +131,20 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             continue;
         } else if arg.eq("-u") || arg.eq("--unmount") {
             output = RunOptions::Unmount(match args.next() {
+                Some(t) => t,
+                None => { usage_and_return!(); }
+            });
+
+            continue;
+        } else if arg.eq("-r") || arg.eq("--repack") {
+            output = RunOptions::Repack(match args.next() {
+                Some(t) => t,
+                None => { usage_and_return!(); }
+            });
+
+            continue;
+        } else if arg.eq("-rm") || arg.eq("--remove") {
+            output = RunOptions::Remove(match args.next() {
                 Some(t) => t,
                 None => { usage_and_return!(); }
             });

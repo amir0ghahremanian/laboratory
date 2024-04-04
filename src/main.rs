@@ -62,6 +62,12 @@ fn main() -> Result<(), String> {
                 }
             )?;
         }
+        Repack(name) => {
+            manage::repack(name)?;
+        }
+        Remove(name) => {
+            manage::remove(name)?;
+        }
         Mount(name, drive_letter) => {
             manage::mount(
                 name,

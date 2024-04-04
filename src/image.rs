@@ -1,8 +1,12 @@
 use std::{
-    collections::HashMap, fs::OpenOptions, io::{self, Read, Write}, process::{Child, Command}
+    collections::HashMap,
+    fs::{remove_dir_all, OpenOptions},
+    io::{self, Read, Write},
+    process::{Child, Command},
 };
 
 use serde::{Deserialize, Serialize};
+use tar::{Archive, Builder};
 use toml::de::Error;
 
 #[derive(Serialize, Deserialize)]
@@ -24,7 +28,13 @@ pub struct App {
     name: String,
     command: String,
     work_dir: String,
-    envs: HashMap<String, String>
+    envs: Vec<Env>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Env {
+    key: String,
+    value: String
 }
 
 impl Lab {
@@ -44,7 +54,7 @@ impl Lab {
             image_path: None,
             expanded_path: Some(path),
             drive_letter: None,
-            config: None
+            config: None,
         }
     }
 
@@ -84,8 +94,51 @@ impl Lab {
         Err("No config to write!".to_string())
     }
 
+    pub fn repack(&mut self) -> Result<(), String> {
+        if let Some(expanded_path) = &self.expanded_path {
+            if let Some(image_path) = &self.image_path {
+                let mut archive = Builder::new(
+                    OpenOptions::new()
+                        .write(true)
+                        .create(true)
+                        .truncate(true)
+                        .open(image_path)
+                        .str_result()?,
+                );
+
+                archive.append_dir_all(".", expanded_path).str_result()?;
+                archive.into_inner().str_result()?.sync_all().str_result()?;
+
+                remove_dir_all(expanded_path).str_result()?;
+
+                self.expanded_path = None;
+
+                return Ok(());
+            }
+
+            return Err("No image to repack!".to_string());
+        }
+
+        Err("Lab not expanded!".to_string())
+    }
+
     pub fn expand(&mut self, target_path: String) -> Result<(), String> {
-        Err("Not implemented!".to_string())
+        if let Some(image_path) = &self.image_path {
+            let mut archive = Archive::new(
+                OpenOptions::new()
+                    .read(true)
+                    .open(image_path)
+                    .str_result()?,
+            );
+
+            archive.unpack(&target_path).str_result()?;
+
+            self.expanded_path = Some(target_path);
+
+            return Ok(());
+        }
+
+        Err("No image to expand!".to_string())
     }
 
     pub fn mount(&mut self, drive_letter: String) -> Result<(), String> {
@@ -125,10 +178,11 @@ impl Lab {
                     if a.name.eq(app) {
                         // run app and return handle
                         let child = Command::new(drive_letter.clone() + ":" + &a.command)
-                        .env_clear()
-                        .current_dir(drive_letter.clone() + ":" + &a.work_dir)
-                        .envs(self.analyze_envs(&a))
-                        .spawn().str_result()?;
+                            .env_clear()
+                            .current_dir(drive_letter.clone() + ":" + &a.work_dir)
+                            .envs(self.analyze_envs(&a))
+                            .spawn()
+                            .str_result()?;
 
                         return Ok(child);
                     }
@@ -146,8 +200,8 @@ impl Lab {
 
         let drive_letter = self.drive_letter.as_ref().unwrap();
 
-        for (key, value) in &app.envs {
-            let (mut key, mut value) = (key.clone(), value.clone());
+        for env in &app.envs {
+            let (mut key, mut value) = (env.key.clone(), env.value.clone());
 
             key = key.replace("$mnt$", &drive_letter);
             value = value.replace("$mnt$", &drive_letter);
