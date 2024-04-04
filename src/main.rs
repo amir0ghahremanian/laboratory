@@ -4,7 +4,7 @@ mod manager;
 
 use std::env::args;
 
-use cmd::{parse_args, print_usage, RunOptions::*};
+use cmd::{parse_args, usage_and_exit, RunOptions::*};
 use manager::manage;
 
 fn main() -> Result<(), String> {
@@ -19,14 +19,29 @@ fn main() -> Result<(), String> {
             println!("name = {}", lab_name);
         }
         Import(config, image) => {
-            if let Some(image) = image {
-                manage::import_lab(image, config)?;
-            } else {
-                print_usage();
-            }
+            manage::import_lab(
+                match image {
+                    Some(image) => image,
+                    None => { usage_and_exit!(); }
+                },
+                config
+            )?;
         }
         List => {
             manage::list()?;
+        }
+        Run(name, app, drive_letter) => {
+            manage::run(
+                name,
+                match app {
+                    Some(app) => app,
+                    None => { usage_and_exit!(); }
+                },
+                match drive_letter {
+                    Some(drive_letter) => drive_letter,
+                    None => { usage_and_exit!(); }
+                }
+            )?;
         }
     };
 

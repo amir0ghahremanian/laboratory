@@ -5,6 +5,7 @@ pub enum RunOptions {
     New(String),
     Import(String, Option<String>),
     List,
+    Run(String, Option<String>, Option<String>),
 }
 
 #[inline(always)]
@@ -64,6 +65,55 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             }
 
             continue;
+        } else if arg.eq("-r") || arg.eq("--run") {
+            output = RunOptions::Run(
+                match args.next() {
+                    Some(t) => t,
+                    None => {
+                        print_usage();
+
+                        return Ok(RunOptions::Exit);
+                    }
+                },
+                None,
+                None
+            );
+
+            continue;
+        } else if arg.eq("-a") || arg.eq("--app") {
+            if let RunOptions::Run(_, app, _) = &mut output {
+                *app = match args.next() {
+                    Some(t) => Some(t),
+                    None => {
+                        print_usage();
+
+                        return Ok(RunOptions::Exit);
+                    }
+                }
+            } else {
+                print_usage();
+
+                return Ok(RunOptions::Exit);
+            }
+
+            continue;
+        } else if arg.eq("-d") || arg.eq("--drive-letter") {
+            if let RunOptions::Run(_, _, drive_letter) = &mut output {
+                *drive_letter = match args.next() {
+                    Some(t) => Some(t),
+                    None => {
+                        print_usage();
+
+                        return Ok(RunOptions::Exit);
+                    }
+                }
+            } else {
+                print_usage();
+
+                return Ok(RunOptions::Exit);
+            }
+
+            continue;
         } else if arg.eq("-l") || arg.eq("--list") {
             return Ok(RunOptions::List);
         } else {
@@ -85,3 +135,13 @@ pub fn print_version() {
 pub fn print_usage() {
     println!("Usage:");
 }
+
+macro_rules! usage_and_exit {
+    () => {
+        crate::cmd::print_usage();
+
+        return Ok(());
+    };
+}
+
+pub(crate) use usage_and_exit;

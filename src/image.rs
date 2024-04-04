@@ -1,6 +1,5 @@
 use std::{
-    fs::OpenOptions,
-    io::{self, Read, Write},
+    fs::OpenOptions, io::{self, Read, Write}, process::{Child, Command}
 };
 
 use serde::{Deserialize, Serialize};
@@ -23,6 +22,8 @@ pub struct LabConfig {
 #[derive(Serialize, Deserialize)]
 pub struct App {
     name: String,
+    command: String,
+    work_dir: String,
 }
 
 impl Lab {
@@ -88,7 +89,7 @@ impl Lab {
 
     pub fn mount(&mut self, drive_letter: String) -> Result<(), String> {
         if let Some(expanded_path) = &self.expanded_path {
-            match Self::create_volume(&drive_letter, &expanded_path) {
+            match Self::create_volume((drive_letter.clone() + ":").as_str(), &expanded_path) {
                 true => {
                     self.drive_letter = Some(drive_letter);
 
@@ -103,7 +104,7 @@ impl Lab {
 
     pub fn unmount(&mut self) -> Result<(), String> {
         if let Some(drive_letter) = &self.drive_letter {
-            match Self::delete_volume(&drive_letter) {
+            match Self::delete_volume((drive_letter.clone() + ":").as_str()) {
                 true => {
                     self.drive_letter = None;
 
@@ -114,6 +115,28 @@ impl Lab {
         }
 
         Err("Lab not mounted!".to_string())
+    }
+
+    pub fn run(&self, app: &str) -> Result<Child, String> {
+        if let Some(drive_letter) = &self.drive_letter {
+            if let Some(c) = &self.config {
+                for a in &c.apps {
+                    if a.name.eq(app) {
+                        // run app and return handle
+                        let child = Command::new(drive_letter.clone() + ":" + &a.command)
+                        .env_clear()
+                        .current_dir(drive_letter.clone() + ":" + &a.work_dir)
+                        .spawn().str_result()?;
+
+                        return Ok(child);
+                    }
+                }
+
+                return Err("App not found!".to_string());
+            }
+        }
+
+        Err("Lab not mounted".to_string())
     }
 
     #[inline(always)]

@@ -17,6 +17,15 @@ mod cache {
         labs: Vec<Lab>,
     }
 
+    impl IntoIterator for Cache {
+        type Item = Lab;
+        type IntoIter = IntoIter<Self::Item>;
+    
+        fn into_iter(self) -> Self::IntoIter {
+            self.data.labs.into_iter()
+        }
+    }
+
     impl Cache {
         pub fn new(path: String) -> Result<Self, String> {
             let prefix = Path::new(&path).parent().unwrap();
@@ -101,17 +110,32 @@ mod cache {
             Ok(())
         }
 
-        pub fn add(&mut self, lab: Lab) {
-            self.data.labs.push(lab);
-        }
-    }
+        pub fn add(&mut self, lab: Lab) -> Result<(), String> {
+            for l in &self.data.labs {
+                if let Some(c) = &l.config {
+                    if let Some(config) = &lab.config {
+                        if c.name.eq(&config.name) {
+                            return Err("Lab with similar name exists!".to_string());
+                        }
+                    }
+                }
+            }
 
-    impl IntoIterator for Cache {
-        type Item = Lab;
-        type IntoIter = IntoIter<Self::Item>;
-    
-        fn into_iter(self) -> Self::IntoIter {
-            self.data.labs.into_iter()
+            self.data.labs.push(lab);
+
+            Ok(())
+        }
+
+        pub fn search(&mut self, name: &str) -> Result<&mut Lab, String> {
+            for l in &mut self.data.labs {
+                if let Some(c) = &l.config {
+                    if c.name.eq(name) {
+                        return Ok(l);
+                    }
+                }
+            }
+
+            Err("Lab not found!".to_string())
         }
     }
 }
@@ -119,7 +143,7 @@ mod cache {
 pub mod manage {
     use std::env;
 
-    use crate::image::Lab;
+    use crate::image::{Lab, StrResult};
 
     use super::cache::Cache;
 
@@ -132,7 +156,7 @@ pub mod manage {
 
         let mut cache = Cache::load(cache_path())?;
 
-        cache.add(lab);
+        cache.add(lab)?;
         cache.write()
     }
 
@@ -142,6 +166,7 @@ pub mod manage {
         for lab in cache {
             match lab.config {
                 Some(config) => {
+                    // could be prettier
                     println!("{}", config.name);
                 }
                 None => {
@@ -149,6 +174,24 @@ pub mod manage {
                 }
             }
         }
+
+        Ok(())
+    }
+
+    pub fn run(name: String, app: String, drive_letter: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        let lab = cache.search(&name)?;
+
+        // lab.expand()?;
+        lab.mount(drive_letter)?;
+
+        let mut child = lab.run(&app)?;
+        child.wait().str_result()?;
+
+        lab.unmount()?;
+
+        cache.write()?;
 
         Ok(())
     }
