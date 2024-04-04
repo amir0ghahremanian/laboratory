@@ -1,5 +1,5 @@
 use std::{
-    fs::OpenOptions, io::{self, Read, Write}, process::{Child, Command}
+    collections::HashMap, fs::OpenOptions, io::{self, Read, Write}, process::{Child, Command}
 };
 
 use serde::{Deserialize, Serialize};
@@ -24,6 +24,7 @@ pub struct App {
     name: String,
     command: String,
     work_dir: String,
+    envs: HashMap<String, String>
 }
 
 impl Lab {
@@ -126,6 +127,7 @@ impl Lab {
                         let child = Command::new(drive_letter.clone() + ":" + &a.command)
                         .env_clear()
                         .current_dir(drive_letter.clone() + ":" + &a.work_dir)
+                        .envs(self.analyze_envs(&a))
                         .spawn().str_result()?;
 
                         return Ok(child);
@@ -137,6 +139,23 @@ impl Lab {
         }
 
         Err("Lab not mounted".to_string())
+    }
+
+    fn analyze_envs(&self, app: &App) -> HashMap<String, String> {
+        let mut analyzed: HashMap<String, String> = HashMap::new();
+
+        let drive_letter = self.drive_letter.as_ref().unwrap();
+
+        for (key, value) in &app.envs {
+            let (mut key, mut value) = (key.clone(), value.clone());
+
+            key = key.replace("$mnt$", &drive_letter);
+            value = value.replace("$mnt$", &drive_letter);
+
+            analyzed.insert(key, value);
+        }
+
+        analyzed
     }
 
     #[inline(always)]

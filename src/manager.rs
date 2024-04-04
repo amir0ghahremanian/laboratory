@@ -141,7 +141,7 @@ mod cache {
 }
 
 pub mod manage {
-    use std::env;
+    use std::{env::{self, current_dir}, path::Path};
 
     use crate::image::{Lab, StrResult};
 
@@ -150,7 +150,7 @@ pub mod manage {
     const CACHE_PATH_APPDATA: &str = "laboratory\\Cache.toml";
 
     pub fn import_lab(image: String, config: String) -> Result<(), String> {
-        let mut lab = Lab::from_image(image);
+        let mut lab = Lab::from_image(analyze_path(image)?);
 
         lab.read_config(&config)?;
 
@@ -182,18 +182,84 @@ pub mod manage {
         let mut cache = Cache::load(cache_path())?;
 
         let lab = cache.search(&name)?;
-
-        // lab.expand()?;
         lab.mount(drive_letter)?;
 
-        let mut child = lab.run(&app)?;
-        child.wait().str_result()?;
+        let mut child = match lab.run(&app) {
+            Ok(t) => t,
+            Err(e) => {
+                lab.unmount()?;
+                return Err(e);
+            }
+        };
 
+        match child.wait().str_result() {
+            Ok(_) => {},
+            Err(e) => {
+                lab.unmount()?;
+                return Err(e);
+            }
+        };
+
+        lab.unmount()?;
+
+        Ok(())
+    }
+
+    pub fn expand(name: String, path: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        let lab = cache.search(&name)?;
+        lab.expand(analyze_path(path)?)?;
+
+        cache.write()?;
+
+        Ok(())
+    }
+
+    pub fn change(name: String, image: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        let lab = cache.search(&name)?;
+        lab.image_path = Some(analyze_path(image)?);
+
+        cache.write()?;
+
+        Ok(())
+    }
+
+    pub fn mount(name: String, drive_letter: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        let lab = cache.search(&name)?;
+        lab.mount(drive_letter)?;
+
+        cache.write()?;
+
+        Ok(())
+    }
+
+    pub fn unmount(name: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        let lab = cache.search(&name)?;
         lab.unmount()?;
 
         cache.write()?;
 
         Ok(())
+    }
+
+    fn analyze_path(path_str: String) -> Result<String, String> {
+        let path = Path::new(&path_str);
+
+        if !path.has_root() {
+            let mut path = current_dir().str_result()?.into_os_string().into_string().unwrap();
+            path = path + "\\" + &path_str;
+
+            return Ok(path);
+        }
+
+        Ok(path_str)
     }
 
     #[inline(always)]

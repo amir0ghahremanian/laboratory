@@ -6,15 +6,15 @@ pub enum RunOptions {
     Import(String, Option<String>),
     List,
     Run(String, Option<String>, Option<String>),
+    Change(String, Option<String>),
+    Expand(String, Option<String>),
+    Mount(String, Option<String>),
+    Unmount(String)
 }
 
 #[inline(always)]
 pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
-    if args.len() == 0 {
-        print_usage();
-
-        return Ok(RunOptions::Exit);
-    }
+    if args.len() == 0 { usage_and_return!(); }
 
     let mut output = RunOptions::Exit;
 
@@ -26,11 +26,7 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
         } else if arg.eq("-n") || arg.eq("--new") {
             output = RunOptions::New(match args.next() {
                 Some(t) => t,
-                None => {
-                    print_usage();
-
-                    return Ok(RunOptions::Exit);
-                }
+                None => { usage_and_return!(); }
             });
 
             continue;
@@ -38,11 +34,7 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             output = RunOptions::Import(
                 match args.next() {
                     Some(t) => t,
-                    None => {
-                        print_usage();
-
-                        return Ok(RunOptions::Exit);
-                    }
+                    None => { usage_and_return!(); }
                 },
                 None,
             );
@@ -52,28 +44,21 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             if let RunOptions::Import(_, image) = &mut output {
                 *image = match args.next() {
                     Some(t) => Some(t),
-                    None => {
-                        print_usage();
-
-                        return Ok(RunOptions::Exit);
-                    }
+                    None => { usage_and_return!(); }
                 };
-            } else {
-                print_usage();
-
-                return Ok(RunOptions::Exit);
-            }
+            } else if let RunOptions::Change(_, image) = &mut output {
+                *image = match args.next() {
+                    Some(t) => Some(t),
+                    None => { usage_and_return!(); }
+                };
+            } else { usage_and_return!(); }
 
             continue;
         } else if arg.eq("-r") || arg.eq("--run") {
             output = RunOptions::Run(
                 match args.next() {
                     Some(t) => t,
-                    None => {
-                        print_usage();
-
-                        return Ok(RunOptions::Exit);
-                    }
+                    None => { usage_and_return!(); }
                 },
                 None,
                 None
@@ -84,43 +69,74 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             if let RunOptions::Run(_, app, _) = &mut output {
                 *app = match args.next() {
                     Some(t) => Some(t),
-                    None => {
-                        print_usage();
-
-                        return Ok(RunOptions::Exit);
-                    }
-                }
-            } else {
-                print_usage();
-
-                return Ok(RunOptions::Exit);
-            }
+                    None => { usage_and_return!(); }
+                };
+            } else { usage_and_return!(); }
 
             continue;
         } else if arg.eq("-d") || arg.eq("--drive-letter") {
             if let RunOptions::Run(_, _, drive_letter) = &mut output {
                 *drive_letter = match args.next() {
                     Some(t) => Some(t),
-                    None => {
-                        print_usage();
+                    None => { usage_and_return!(); }
+                };
+            } else if let RunOptions::Mount(_, drive_letter) = &mut output {
+                *drive_letter = match args.next() {
+                    Some(t) => Some(t),
+                    None => { usage_and_return!(); }
+                };
+            } else { usage_and_return!(); }
 
-                        return Ok(RunOptions::Exit);
-                    }
-                }
-            } else {
-                print_usage();
+            continue;
+        } else if arg.eq("-c") || arg.eq("--change") {
+            output = RunOptions::Change(
+                match args.next() {
+                    Some(t) => t,
+                    None => { usage_and_return!(); }
+                },
+                None
+            );
 
-                return Ok(RunOptions::Exit);
-            }
+            continue;
+        } else if arg.eq("-e") || arg.eq("--expand") {
+            output = RunOptions::Expand(
+                match args.next() {
+                    Some(t) => t,
+                    None => { usage_and_return!(); }
+                },
+                None
+            );
+
+            continue;
+        } else if arg.eq("-p") || arg.eq("--path") {
+            if let RunOptions::Expand(_, path) = &mut output {
+                *path = match args.next() {
+                    Some(t) => Some(t),
+                    None => { usage_and_return!(); }
+                };
+            } else { usage_and_return!(); }
+
+            continue;
+        } else if arg.eq("-m") || arg.eq("--mount") {
+            output = RunOptions::Mount(
+                match args.next() {
+                    Some(t) => t,
+                    None => { usage_and_return!(); }
+                },
+                None
+            );
+
+            continue;
+        } else if arg.eq("-u") || arg.eq("--unmount") {
+            output = RunOptions::Unmount(match args.next() {
+                Some(t) => t,
+                None => { usage_and_return!(); }
+            });
 
             continue;
         } else if arg.eq("-l") || arg.eq("--list") {
             return Ok(RunOptions::List);
-        } else {
-            print_usage();
-
-            return Ok(RunOptions::Exit);
-        }
+        } else { usage_and_return!(); }
     }
 
     Ok(output)
@@ -136,6 +152,14 @@ pub fn print_usage() {
     println!("Usage:");
 }
 
+macro_rules! usage_and_return {
+    () => {
+        crate::cmd::print_usage();
+
+        return Ok(crate::cmd::RunOptions::Exit);
+    };
+}
+
 macro_rules! usage_and_exit {
     () => {
         crate::cmd::print_usage();
@@ -144,4 +168,4 @@ macro_rules! usage_and_exit {
     };
 }
 
-pub(crate) use usage_and_exit;
+pub(crate) use {usage_and_exit, usage_and_return};
