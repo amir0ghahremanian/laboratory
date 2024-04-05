@@ -204,9 +204,13 @@ pub mod manage {
         match drive_letter {
             Some(drive_letter) => {
                 lab.mount(drive_letter)?;
+                cache.write()?;
             }
             None => {}
         };
+
+        // repetition is not ideal
+        let lab = cache.search(&name)?;
 
         let mut child = lab.run(&app)?;
         child.wait().str_result()?;
