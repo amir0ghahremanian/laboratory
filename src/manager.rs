@@ -159,7 +159,7 @@ pub mod manage {
 
     use super::cache::Cache;
 
-    const CACHE_PATH_APPDATA: &str = "laboratory\\Cache.toml";
+    const CACHE_PATH: &str = ".laboratory\\Cache.toml";
 
     pub fn import_lab(image: String, config: String) -> Result<(), String> {
         let mut lab = Lab::from_image(analyze_path(image)?);
@@ -336,6 +336,7 @@ pub mod manage {
 
     #[inline(always)]
     fn cache_path() -> String {
-        env::var("APPDATA").unwrap() + "\\" + CACHE_PATH_APPDATA
+        CACHE_PATH.to_string()
+        // env::var("APPDATA").unwrap() + "\\" + CACHE_PATH_APPDATA
     }
 }
