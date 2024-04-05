@@ -1,6 +1,9 @@
 mod cache {
     use std::{
-        fs::{create_dir_all, OpenOptions}, io::{ErrorKind, Read, Write}, path::Path, vec::IntoIter,
+        fs::{create_dir_all, OpenOptions},
+        io::{ErrorKind, Read, Write},
+        path::Path,
+        vec::IntoIter,
     };
 
     use serde::{Deserialize, Serialize};
@@ -20,7 +23,7 @@ mod cache {
     impl IntoIterator for Cache {
         type Item = Lab;
         type IntoIter = IntoIter<Self::Item>;
-    
+
         fn into_iter(self) -> Self::IntoIter {
             self.data.labs.into_iter()
         }
@@ -112,12 +115,8 @@ mod cache {
 
         pub fn add(&mut self, lab: Lab) -> Result<(), String> {
             for l in &self.data.labs {
-                if let Some(c) = &l.config {
-                    if let Some(config) = &lab.config {
-                        if c.name.eq(&config.name) {
-                            return Err("Lab with similar name exists!".to_string());
-                        }
-                    }
+                if l.config.name.eq(&lab.config.name) {
+                    return Err("Lab with similar name exists!".to_string());
                 }
             }
 
@@ -128,10 +127,8 @@ mod cache {
 
         pub fn search(&mut self, name: &str) -> Result<&mut Lab, String> {
             for l in &mut self.data.labs {
-                if let Some(c) = &l.config {
-                    if c.name.eq(name) {
-                        return Ok(l);
-                    }
+                if l.config.name.eq(name) {
+                    return Ok(l);
                 }
             }
 
@@ -139,29 +136,24 @@ mod cache {
         }
 
         pub fn remove(&mut self, name: &str) -> Result<(), String> {
-            let index = self.data.labs.iter().position(|x| {
-                if let Some(config) = &x.config {
-                    return config.name.eq(name);
-                }
-
-                false
-            });
+            let index = self.data.labs.iter().position(|x| x.config.name.eq(name));
 
             match index {
                 Some(index) => {
                     self.data.labs.remove(index);
                     Ok(())
                 }
-                None => {
-                    Err("Lab not found!".to_string())
-                }
+                None => Err("Lab not found!".to_string()),
             }
         }
     }
 }
 
 pub mod manage {
-    use std::{env::{self, current_dir}, path::Path};
+    use std::{
+        env::{self, current_dir},
+        path::Path,
+    };
 
     use crate::image::{Lab, StrResult};
 
@@ -177,22 +169,16 @@ pub mod manage {
         let mut cache = Cache::load(cache_path())?;
 
         cache.add(lab)?;
-        cache.write()
+        cache.write()?;
+
+        Ok(())
     }
 
     pub fn list() -> Result<(), String> {
         let cache = Cache::load(cache_path())?;
 
         for lab in cache {
-            match lab.config {
-                Some(config) => {
-                    // could be prettier
-                    println!("{}", config.name);
-                }
-                None => {
-                    continue;
-                }
-            }
+            println!("{}", lab.config.name);
         }
 
         Ok(())
@@ -202,38 +188,28 @@ pub mod manage {
         let mut cache = Cache::load(cache_path())?;
 
         let lab = cache.search(&name)?;
-        let config = lab.config.as_ref().unwrap();
 
-        for app in &config.apps {
+        for app in &lab.config.apps {
             println!("{}", app.name);
         }
 
         Ok(())
     }
 
-    pub fn run(name: String, app: String, drive_letter: String) -> Result<(), String> {
+    pub fn run(name: String, app: String, drive_letter: Option<String>) -> Result<(), String> {
         let mut cache = Cache::load(cache_path())?;
 
         let lab = cache.search(&name)?;
-        lab.mount(drive_letter)?;
 
-        let mut child = match lab.run(&app) {
-            Ok(t) => t,
-            Err(e) => {
-                lab.unmount()?;
-                return Err(e);
+        match drive_letter {
+            Some(drive_letter) => {
+                lab.mount(drive_letter)?;
             }
+            None => {}
         };
 
-        match child.wait().str_result() {
-            Ok(_) => {},
-            Err(e) => {
-                lab.unmount()?;
-                return Err(e);
-            }
-        };
-
-        lab.unmount()?;
+        let mut child = lab.run(&app)?;
+        child.wait().str_result()?;
 
         Ok(())
     }
@@ -304,6 +280,17 @@ pub mod manage {
         Ok(())
     }
 
+    pub fn update(name: String, path: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        let lab = cache.search(&name)?;
+        lab.read_config(&path)?;
+
+        cache.write()?;
+
+        Ok(())
+    }
+
     pub fn mount(name: String, drive_letter: String) -> Result<(), String> {
         let mut cache = Cache::load(cache_path())?;
 
@@ -330,7 +317,11 @@ pub mod manage {
         let path = Path::new(&path_str);
 
         if !path.has_root() {
-            let mut path = current_dir().str_result()?.into_os_string().into_string().unwrap();
+            let mut path = current_dir()
+                .str_result()?
+                .into_os_string()
+                .into_string()
+                .unwrap();
             path = path + "\\" + &path_str;
 
             return Ok(path);

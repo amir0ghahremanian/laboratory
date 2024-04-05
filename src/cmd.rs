@@ -7,6 +7,7 @@ pub enum RunOptions {
     ListApps(String),
     Run(String, Option<String>, Option<String>),
     Change(String, Option<String>),
+    Update(String, Option<String>),
     Expand(String, Option<String>),
     Repack(String),
     Restore(String),
@@ -110,6 +111,11 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
                     Some(t) => Some(t),
                     None => { usage_and_return!(); }
                 };
+            } else if let RunOptions::Update(_, path) = &mut output {
+                *path = match args.next() {
+                    Some(t) => Some(t),
+                    None => { usage_and_return!(); }
+                };
             } else { usage_and_return!(); }
 
             continue;
@@ -156,6 +162,16 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
                 Some(t) => t,
                 None => { usage_and_return!(); }
             });
+
+            continue;
+        } else if arg.eq("-U") || arg.eq("--update") {
+            output = RunOptions::Update(
+                match args.next() {
+                    Some(t) => t,
+                    None => { usage_and_return!(); }
+                },
+                None
+            );
 
             continue;
         } else if arg.eq("-l") || arg.eq("--list") {

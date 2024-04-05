@@ -38,10 +38,7 @@ fn main() -> Result<(), String> {
                     Some(app) => app,
                     None => { usage_and_exit!(); }
                 },
-                match drive_letter {
-                    Some(drive_letter) => drive_letter,
-                    None => { usage_and_exit!(); }
-                }
+                drive_letter
             )?;
         }
         Change(name, image) => {
@@ -50,6 +47,15 @@ fn main() -> Result<(), String> {
                 name,
                 match image {
                     Some(image) => image,
+                    None => { usage_and_exit!(); }
+                }
+            )?;
+        }
+        Update(name, path) => {
+            manage::update(
+                name,
+                match path {
+                    Some(path) => path,
                     None => { usage_and_exit!(); }
                 }
             )?;

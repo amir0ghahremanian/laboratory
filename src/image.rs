@@ -1,5 +1,9 @@
 use std::{
-    collections::HashMap, env, fs::{remove_dir_all, OpenOptions}, io::{self, Read}, process::{Child, Command}
+    collections::HashMap,
+    env,
+    fs::{remove_dir_all, OpenOptions},
+    io::{self, Read},
+    process::{Child, Command},
 };
 
 use serde::{Deserialize, Serialize};
@@ -11,7 +15,7 @@ pub struct Lab {
     pub image_path: Option<String>,
     pub expanded_path: Option<String>,
     pub drive_letter: Option<String>,
-    pub config: Option<LabConfig>,
+    pub config: LabConfig,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -31,7 +35,7 @@ pub struct App {
 #[derive(Serialize, Deserialize)]
 pub struct Env {
     key: String,
-    value: String
+    value: String,
 }
 
 impl Lab {
@@ -41,7 +45,10 @@ impl Lab {
             image_path: Some(path),
             expanded_path: None,
             drive_letter: None,
-            config: None,
+            config: LabConfig {
+                name: "".to_string(),
+                apps: Vec::new(),
+            },
         }
     }
 
@@ -66,7 +73,7 @@ impl Lab {
             toml::from_str(&toml).str_result()?
         };
 
-        self.config = Some(config);
+        self.config = config;
 
         Ok(())
     }
@@ -204,23 +211,21 @@ impl Lab {
 
     pub fn run(&self, app: &str) -> Result<Child, String> {
         if let Some(drive_letter) = &self.drive_letter {
-            if let Some(c) = &self.config {
-                for a in &c.apps {
-                    if a.name.eq(app) {
-                        // run app and return handle
-                        let child = Command::new(drive_letter.clone() + ":" + &a.command)
-                            .env_clear()
-                            .current_dir(drive_letter.clone() + ":" + &a.work_dir)
-                            .envs(self.analyze_envs(&a))
-                            .spawn()
-                            .str_result()?;
+            for a in &self.config.apps {
+                if a.name.eq(app) {
+                    // run app and return handle
+                    let child = Command::new(drive_letter.clone() + ":" + &a.command)
+                        .env_clear()
+                        .current_dir(drive_letter.clone() + ":" + &a.work_dir)
+                        .envs(self.analyze_envs(&a))
+                        .spawn()
+                        .str_result()?;
 
-                        return Ok(child);
-                    }
+                    return Ok(child);
                 }
-
-                return Err("App not found!".to_string());
             }
+
+            return Err("App not found!".to_string());
         }
 
         Err("Lab not mounted".to_string())
