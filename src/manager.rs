@@ -242,6 +242,11 @@ pub mod manage {
         let mut cache = Cache::load(cache_path())?;
 
         let lab = cache.search(&name)?;
+
+        if let Some(_) = &lab.drive_letter {
+            return Err("Lab is mounted!".to_string());
+        }
+
         lab.expand(analyze_path(path)?)?;
 
         cache.write()?;
@@ -253,6 +258,11 @@ pub mod manage {
         let mut cache = Cache::load(cache_path())?;
 
         let lab = cache.search(&name)?;
+
+        if let Some(_) = &lab.drive_letter {
+            return Err("Lab is mounted!".to_string());
+        }
+
         lab.repack()?;
 
         cache.write()?;
@@ -264,6 +274,11 @@ pub mod manage {
         let mut cache = Cache::load(cache_path())?;
 
         let lab = cache.search(&name)?;
+
+        if let Some(_) = &lab.drive_letter {
+            return Err("Lab is mounted!".to_string());
+        }
+
         lab.restore()?;
 
         Ok(())

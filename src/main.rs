@@ -69,6 +69,7 @@ fn main() -> Result<(), String> {
         Restore(name) => {
             manage::restore(name)?;
         }
+        // does not check mount status
         Remove(name) => {
             manage::remove(name)?;
         }
