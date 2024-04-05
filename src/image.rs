@@ -1,8 +1,5 @@
 use std::{
-    collections::HashMap,
-    fs::{remove_dir_all, OpenOptions},
-    io::{self, Read},
-    process::{Child, Command},
+    collections::HashMap, env, fs::{remove_dir_all, OpenOptions}, io::{self, Read}, process::{Child, Command}
 };
 
 use serde::{Deserialize, Serialize};
@@ -122,6 +119,29 @@ impl Lab {
         Err("Lab not expanded!".to_string())
     }
 
+    pub fn restore(&self) -> Result<(), String> {
+        if let Some(expanded_path) = &self.expanded_path {
+            if let Some(image_path) = &self.image_path {
+                remove_dir_all(expanded_path).str_result()?;
+
+                let mut archive = Archive::new(
+                    OpenOptions::new()
+                        .read(true)
+                        .open(image_path)
+                        .str_result()?,
+                );
+
+                archive.unpack(expanded_path).str_result()?;
+
+                return Ok(());
+            }
+
+            return Err("No image to restore!".to_string());
+        }
+
+        Err("Lab not expanded!".to_string())
+    }
+
     pub fn expand(&mut self, target_path: String) -> Result<(), String> {
         if let Some(image_path) = &self.image_path {
             let mut archive = Archive::new(
@@ -142,6 +162,17 @@ impl Lab {
     }
 
     pub fn mount(&mut self, drive_letter: String) -> Result<(), String> {
+        match &self.drive_letter {
+            Some(d) => {
+                if !d.eq(&drive_letter) {
+                    self.unmount()?;
+                } else {
+                    return Ok(());
+                }
+            }
+            None => {}
+        };
+
         if let Some(expanded_path) = &self.expanded_path {
             match Self::create_volume((drive_letter.clone() + ":").as_str(), &expanded_path) {
                 true => {
@@ -201,10 +232,14 @@ impl Lab {
         let drive_letter = self.drive_letter.as_ref().unwrap();
 
         for env in &app.envs {
-            let (mut key, mut value) = (env.key.clone(), env.value.clone());
+            let (key, mut value) = (env.key.clone(), env.value.clone());
 
-            key = key.replace("$mnt$", &drive_letter);
-            value = value.replace("$mnt$", &drive_letter);
+            // key = key.replace("$mnt$", &drive_letter);
+            if value.eq("$sm$") {
+                value = env::var(&key).unwrap();
+            } else {
+                value = value.replace("$mnt$", &drive_letter);
+            }
 
             analyzed.insert(key, value);
         }

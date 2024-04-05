@@ -9,6 +9,7 @@ pub enum RunOptions {
     Change(String, Option<String>),
     Expand(String, Option<String>),
     Repack(String),
+    Restore(String),
     Remove(String),
     Mount(String, Option<String>),
     Unmount(String)
@@ -145,6 +146,13 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             continue;
         } else if arg.eq("-L") || arg.eq("--list-apps") {
             output = RunOptions::ListApps(match args.next() {
+                Some(t) => t,
+                None => { usage_and_return!(); }
+            });
+
+            continue;
+        } else if arg.eq("-rs") || arg.eq("--restore") {
+            output = RunOptions::Restore(match args.next() {
                 Some(t) => t,
                 None => { usage_and_return!(); }
             });

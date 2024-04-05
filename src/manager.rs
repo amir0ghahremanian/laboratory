@@ -260,6 +260,15 @@ pub mod manage {
         Ok(())
     }
 
+    pub fn restore(name: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        let lab = cache.search(&name)?;
+        lab.restore()?;
+
+        Ok(())
+    }
+
     pub fn remove(name: String) -> Result<(), String> {
         let mut cache = Cache::load(cache_path())?;
 
