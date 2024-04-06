@@ -156,6 +156,8 @@ pub mod manage {
         path::Path,
     };
 
+    use colored::Colorize;
+
     use crate::image::{Lab, StrResult};
 
     use super::cache::Cache;
@@ -181,18 +183,18 @@ pub mod manage {
         print!("\n");
 
         for lab in cache {
-            print!("name = {}\n", lab.config.name);
-            print!("--------------------------\n");
+            print!("{} = {}\n", "name".green().bold(), lab.config.name.cyan().bold());
+            print!("{}\n", "--------------------------".blue().bold());
 
             if let Some(image_path) = &lab.image_path {
-                print!("image -> {}\n", image_path);
+                print!("{} -> {}\n", "image".green(), image_path.cyan());
             }
 
             if let Some(expanded_path) = &lab.expanded_path {
-                print!("expanded -> {}\n", expanded_path);
+                print!("{} -> {}\n", "expanded".green(), expanded_path.cyan());
 
                 if let Some(drive_letter) = &lab.drive_letter {
-                    print!("mounted -> {}:\\\n", drive_letter);
+                    print!("{} -> {}:\\\n", "mounted".green(), drive_letter.cyan());
                 }
             }
 
@@ -212,16 +214,16 @@ pub mod manage {
         print!("\n");
 
         for app in &lab.config.apps {
-            print!("name = {}\n", app.name);
-            print!("--------------------------\n");
+            print!("{} = {}\n", "name".green().bold(), app.name.cyan().bold());
+            print!("{}\n", "--------------------------".blue().bold());
 
-            print!("command -> {}\n", app.command);
-            print!("workdir -> {}\n", app.work_dir);
+            print!("{} -> {}\n", "command".green(), app.command.cyan());
+            print!("{} -> {}\n", "workdir".green(), app.work_dir.cyan());
 
-            print!("env:\n");
+            print!("{}\n", "env:".green());
 
             for env in &app.envs {
-                print!("\t{} = {}\n", env.key, env.value);
+                print!("\t{} = {}\n", env.key.cyan(), env.value.cyan());
             }
 
             print!("\n\n");

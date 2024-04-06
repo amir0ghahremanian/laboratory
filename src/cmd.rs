@@ -178,7 +178,11 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             continue;
         } else if arg.eq("-l") || arg.eq("--list") {
             return Ok(RunOptions::List);
-        } else { usage_and_return!(); }
+        } else {
+            println!("Unknown option: {}", arg.red().bold());
+
+            usage_and_return!();
+        }
     }
 
     Ok(output)
@@ -187,7 +191,7 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
 #[inline(always)]
 pub fn print_version() {
     println!(
-r#"Laboratory v0.1.2
+r#"Laboratory v0.1.3
 Copyright (C) 2023 amir0ghahremanian
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
