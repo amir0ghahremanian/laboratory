@@ -30,7 +30,6 @@ fn main() -> Result<(), String> {
         ListApps(name) => {
             manage::list_apps(name)?;
         }
-        // add do not unmount option
         Run(name, app, drive_letter) => {
             manage::run(
                 name,
@@ -42,7 +41,6 @@ fn main() -> Result<(), String> {
             )?;
         }
         Change(name, image) => {
-            // change image
             manage::change(
                 name,
                 match image {

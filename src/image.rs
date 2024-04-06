@@ -27,15 +27,15 @@ pub struct LabConfig {
 #[derive(Serialize, Deserialize)]
 pub struct App {
     pub name: String,
-    command: String,
-    work_dir: String,
-    envs: Vec<Env>,
+    pub command: String,
+    pub work_dir: String,
+    pub envs: Vec<Env>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct Env {
-    key: String,
-    value: String,
+    pub key: String,
+    pub value: String,
 }
 
 impl Lab {

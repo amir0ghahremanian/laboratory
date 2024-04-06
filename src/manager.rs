@@ -151,7 +151,8 @@ mod cache {
 
 pub mod manage {
     use std::{
-        env::{self, current_dir},
+        env::current_dir,
+        io::{stdout, Write},
         path::Path,
     };
 
@@ -177,9 +178,28 @@ pub mod manage {
     pub fn list() -> Result<(), String> {
         let cache = Cache::load(cache_path())?;
 
+        print!("\n");
+
         for lab in cache {
-            println!("{}", lab.config.name);
+            print!("name = {}\n", lab.config.name);
+            print!("--------------------------\n");
+
+            if let Some(image_path) = &lab.image_path {
+                print!("image -> {}\n", image_path);
+            }
+
+            if let Some(expanded_path) = &lab.expanded_path {
+                print!("expanded -> {}\n", expanded_path);
+
+                if let Some(drive_letter) = &lab.drive_letter {
+                    print!("mounted -> {}:\\\n", drive_letter);
+                }
+            }
+
+            print!("\n\n");
         }
+
+        stdout().flush().str_result()?;
 
         Ok(())
     }
@@ -189,9 +209,25 @@ pub mod manage {
 
         let lab = cache.search(&name)?;
 
+        print!("\n");
+
         for app in &lab.config.apps {
-            println!("{}", app.name);
+            print!("name = {}\n", app.name);
+            print!("--------------------------\n");
+
+            print!("command -> {}\n", app.command);
+            print!("workdir -> {}\n", app.work_dir);
+
+            print!("env:\n");
+
+            for env in &app.envs {
+                print!("\t{} = {}\n", env.key, env.value);
+            }
+
+            print!("\n\n");
         }
+
+        stdout().flush().str_result()?;
 
         Ok(())
     }
@@ -267,6 +303,10 @@ pub mod manage {
     pub fn remove(name: String) -> Result<(), String> {
         let mut cache = Cache::load(cache_path())?;
 
+        if let Some(_) = &cache.search(&name)?.drive_letter {
+            return Err("Lab is mounted!".to_string());
+        }
+
         cache.remove(&name)?;
         cache.write()?;
 
@@ -277,6 +317,11 @@ pub mod manage {
         let mut cache = Cache::load(cache_path())?;
 
         let lab = cache.search(&name)?;
+
+        if let Some(_) = &lab.expanded_path {
+            return Err("Lab is expanded!".to_string());
+        }
+
         lab.image_path = Some(analyze_path(image)?);
 
         cache.write()?;

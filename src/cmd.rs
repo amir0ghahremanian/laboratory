@@ -1,5 +1,7 @@
 use std::env::Args;
 
+use colored::*;
+
 pub enum RunOptions {
     Exit,
     Import(String, Option<String>),
@@ -184,12 +186,55 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
 
 #[inline(always)]
 pub fn print_version() {
-    println!("Laboratory v0.1.1");
+    println!(
+r#"Laboratory v0.1.2
+Copyright (C) 2023 amir0ghahremanian
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+"#
+    );
 }
 
-#[inline(always)]
 pub fn print_usage() {
-    println!("Usage:");
+    println!("\n{} {} {}\n", "Usage:".green().bold(), "laboratory".cyan().bold(), "[OPTIONS]".cyan());
+
+    println!("{}", "Options:".green().bold());
+    print!("  {}, {}", "-v".cyan().bold(), "--version".cyan().bold());
+    println!("                     Print version info and exit");
+    print!("  {}, {} {} {}", "-I".cyan().bold(), "--import".cyan().bold(), "<CONFIG>".cyan(), "[IMAGE]".cyan());
+    println!("     Import laboratory");
+    print!("  {}, {} {}", "-i".cyan().bold(), "--image".cyan().bold(), "<IMAGE>".cyan());
+    println!("               Choose image");
+    print!("  {}, {} {} {}", "-R".cyan().bold(), "--run".cyan().bold(), "<LAB>".cyan(), "[APP]".cyan());
+    println!("             Run app from laboratory");
+    print!("  {}, {} {}", "-a".cyan().bold(), "--app".cyan().bold(), "<APP>".cyan());
+    println!("                   Choose app");
+    print!("  {}, {} {}", "-d".cyan().bold(), "--drive-letter".cyan().bold(), "<LETTER>".cyan());
+    println!("       Choose drive letter");
+    print!("  {}, {} {} {}", "-c".cyan().bold(), "--change".cyan().bold(), "<LAB>".cyan(), "[IMAGE]".cyan());
+    println!("        Change laboratory image");
+    print!("  {}, {} {} {}", "-U".cyan().bold(), "--update".cyan().bold(), "<LAB>".cyan(), "[PATH]".cyan());
+    println!("         Update laboratory configuration");
+    print!("  {}, {} {} {}", "-e".cyan().bold(), "--expand".cyan().bold(), "<LAB>".cyan(), "[PATH]".cyan());
+    println!("         Expand laboratory");
+    print!("  {}, {} {}", "-p".cyan().bold(), "--path".cyan().bold(), "<PATH>".cyan());
+    println!("                 Choose path");
+    print!("  {}, {} {} {}", "-m".cyan().bold(), "--mount".cyan().bold(), "<LAB>".cyan(), "[LETTER]".cyan());
+    println!("        Mount laboratory");
+    print!("  {}, {} {}", "-u".cyan().bold(), "--unmount".cyan().bold(), "<LAB>".cyan());
+    println!("               Unmount laboratory");
+    print!("  {}, {} {}", "-r".cyan().bold(), "--repack".cyan().bold(), "<LAB>".cyan());
+    println!("                Repack laboratory");
+    print!("  {}, {} {}", "-rs".cyan().bold(), "--restore".cyan().bold(), "<LAB>".cyan());
+    println!("              Restore laboratory");
+    print!("  {}, {} {}", "-rm".cyan().bold(), "--remove".cyan().bold(), "<LAB>".cyan());
+    println!("               Remove laboratory");
+    print!("  {}, {}", "-l".cyan().bold(), "--list".cyan().bold());
+    println!("                        List laboratories");
+    print!("  {}, {} {}", "-L".cyan().bold(), "--list-apps".cyan().bold(), "<LAB>".cyan());
+    println!("             List apps");
+
+    println!("");
 }
 
 macro_rules! usage_and_return {
