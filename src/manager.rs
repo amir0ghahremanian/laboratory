@@ -272,6 +272,22 @@ pub mod manage {
         Ok(())
     }
 
+    pub fn discard(name: String) -> Result<(), String> {
+        let mut cache = Cache::load(cache_path())?;
+
+        let lab = cache.search(&name)?;
+
+        if let Some(_) = &lab.drive_letter {
+            return Err("Lab is mounted!".to_string());
+        }
+
+        lab.discard()?;
+
+        cache.write()?;
+
+        Ok(())
+    }
+
     pub fn repack(name: String) -> Result<(), String> {
         let mut cache = Cache::load(cache_path())?;
 

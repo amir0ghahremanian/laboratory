@@ -67,13 +67,15 @@ fn main() -> Result<(), String> {
                 }
             )?;
         }
+        Discard(name) => {
+            manage::discard(name)?;
+        }
         Repack(name) => {
             manage::repack(name)?;
         }
         Restore(name) => {
             manage::restore(name)?;
         }
-        // does not check mount status
         Remove(name) => {
             manage::remove(name)?;
         }

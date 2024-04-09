@@ -11,6 +11,7 @@ pub enum RunOptions {
     Change(String, Option<String>),
     Update(String, Option<String>),
     Expand(String, Option<String>),
+    Discard(String),
     Repack(String),
     Restore(String),
     Remove(String),
@@ -176,6 +177,13 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             );
 
             continue;
+        } else if arg.eq("-D") || arg.eq("--discard") {
+            output = RunOptions::Discard(match args.next() {
+                Some(t) => t,
+                None => { usage_and_return!(); }
+            });
+
+            continue;
         } else if arg.eq("-l") || arg.eq("--list") {
             return Ok(RunOptions::List);
         } else {
@@ -227,6 +235,8 @@ pub fn print_usage() {
     println!("        Mount laboratory");
     print!("  {}, {} {}", "-u".cyan().bold(), "--unmount".cyan().bold(), "<LAB>".cyan());
     println!("               Unmount laboratory");
+    print!("  {}, {} {}", "-D".cyan().bold(), "--discard".cyan().bold(), "<LAB>".cyan());
+    println!("               Discard and remove expanded folder");
     print!("  {}, {} {}", "-r".cyan().bold(), "--repack".cyan().bold(), "<LAB>".cyan());
     println!("                Repack laboratory");
     print!("  {}, {} {}", "-rs".cyan().bold(), "--restore".cyan().bold(), "<LAB>".cyan());

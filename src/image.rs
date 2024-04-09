@@ -98,6 +98,18 @@ impl Lab {
     //     Err("No config to write!".to_string())
     // }
 
+    pub fn discard(&mut self) -> Result<(), String> {
+        if let Some(expanded_path) = &self.expanded_path {
+            remove_dir_all(expanded_path).str_result()?;
+
+            self.expanded_path = None;
+
+            return Ok(());
+        }
+
+        Err("Lab not expanded!".to_string())
+    }
+
     pub fn repack(&mut self) -> Result<(), String> {
         if let Some(expanded_path) = &self.expanded_path {
             if let Some(image_path) = &self.image_path {
