@@ -218,6 +218,12 @@ pub mod manage {
             print!("{}\n", "--------------------------".blue().bold());
 
             print!("{} -> {}\n", "command".green(), app.command.cyan());
+
+            print!("{}\n", "args:".green());
+            for arg in &app.args {
+                print!("\t{}\n", arg.cyan());
+            }
+
             print!("{} -> {}\n", "workdir".green(), app.work_dir.cyan());
 
             print!("{}\n", "env:".green());

@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    env,
+    env::{self, VarError},
     fs::{remove_dir_all, OpenOptions},
     io::{self, Read},
     process::{Child, Command},
@@ -28,6 +28,7 @@ pub struct LabConfig {
 pub struct App {
     pub name: String,
     pub command: String,
+    pub args: Vec<String>,
     pub work_dir: String,
     pub envs: Vec<Env>,
 }
@@ -229,7 +230,8 @@ impl Lab {
                     let child = Command::new(drive_letter.clone() + ":" + &a.command)
                         .env_clear()
                         .current_dir(drive_letter.clone() + ":" + &a.work_dir)
-                        .envs(self.analyze_envs(&a))
+                        .envs(self.analyze_envs(&a)?)
+                        .args(&a.args)
                         .spawn()
                         .str_result()?;
 
@@ -243,7 +245,7 @@ impl Lab {
         Err("Lab not mounted".to_string())
     }
 
-    fn analyze_envs(&self, app: &App) -> HashMap<String, String> {
+    fn analyze_envs(&self, app: &App) -> Result<HashMap<String, String>, String> {
         let mut analyzed: HashMap<String, String> = HashMap::new();
 
         let drive_letter = self.drive_letter.as_ref().unwrap();
@@ -253,7 +255,7 @@ impl Lab {
 
             // key = key.replace("$mnt$", &drive_letter);
             if value.eq("$sm$") {
-                value = env::var(&key).unwrap();
+                value = env::var(&key).str_result()?;
             } else {
                 value = value.replace("$mnt$", &drive_letter);
             }
@@ -261,7 +263,7 @@ impl Lab {
             analyzed.insert(key, value);
         }
 
-        analyzed
+        Ok(analyzed)
     }
 
     #[inline(always)]
@@ -289,6 +291,15 @@ impl<T> StrResult<T> for Result<T, Error> {
 }
 
 impl<T> StrResult<T> for io::Result<T> {
+    fn str_result(self) -> Result<T, String> {
+        match self {
+            Ok(t) => Ok(t),
+            Err(e) => Err(e.to_string()),
+        }
+    }
+}
+
+impl<T> StrResult<T> for Result<T, VarError> {
     fn str_result(self) -> Result<T, String> {
         match self {
             Ok(t) => Ok(t),
