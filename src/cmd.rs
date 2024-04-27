@@ -7,7 +7,7 @@ pub enum RunOptions {
     Import(String, Option<String>),
     List,
     ListApps(String),
-    Run(String, Option<String>, Option<String>),
+    Run(String, Option<String>, Option<String>, Option<Vec<String>>),
     Change(String, Option<String>),
     Update(String, Option<String>),
     Expand(String, Option<String>),
@@ -61,12 +61,13 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
                     None => { usage_and_return!(); }
                 },
                 None,
+                None,
                 None
             );
 
             continue;
         } else if arg.eq("-a") || arg.eq("--app") {
-            if let RunOptions::Run(_, app, _) = &mut output {
+            if let RunOptions::Run(_, app, _, _) = &mut output {
                 *app = match args.next() {
                     Some(t) => Some(t),
                     None => { usage_and_return!(); }
@@ -75,7 +76,7 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
 
             continue;
         } else if arg.eq("-d") || arg.eq("--drive-letter") {
-            if let RunOptions::Run(_, _, drive_letter) = &mut output {
+            if let RunOptions::Run(_, _, drive_letter, _) = &mut output {
                 *drive_letter = match args.next() {
                     Some(t) => Some(t),
                     None => { usage_and_return!(); }
@@ -88,6 +89,12 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
             } else { usage_and_return!(); }
 
             continue;
+        } else if arg.eq("--") {
+            if let RunOptions::Run(_, _, _, arg_vector) = &mut output {
+                *arg_vector = Some(args.collect());
+
+                return Ok(output);
+            } else { usage_and_return!(); }
         } else if arg.eq("-c") || arg.eq("--change") {
             output = RunOptions::Change(
                 match args.next() {
@@ -199,7 +206,7 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
 #[inline(always)]
 pub fn print_version() {
     println!(
-r#"Laboratory v0.1.4
+r#"Laboratory v0.1.5
 Copyright (C) 2023 amir0ghahremanian
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.

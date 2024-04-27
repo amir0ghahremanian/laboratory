@@ -240,7 +240,7 @@ pub mod manage {
         Ok(())
     }
 
-    pub fn run(name: String, app: String, drive_letter: Option<String>) -> Result<(), String> {
+    pub fn run(name: String, app: String, drive_letter: Option<String>, arg_vector: Option<Vec<String>>) -> Result<(), String> {
         let mut cache = Cache::load(cache_path())?;
 
         let lab = cache.search(&name)?;
@@ -256,7 +256,10 @@ pub mod manage {
         // repetition is not ideal
         let lab = cache.search(&name)?;
 
-        let mut child = lab.run(&app)?;
+        let mut child = lab.run(
+            &app,
+            arg_vector
+        )?;
         child.wait().str_result()?;
 
         Ok(())

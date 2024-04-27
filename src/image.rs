@@ -222,7 +222,7 @@ impl Lab {
         Err("Lab not mounted!".to_string())
     }
 
-    pub fn run(&self, app: &str) -> Result<Child, String> {
+    pub fn run(&self, app: &str, args: Option<Vec<String>>) -> Result<Child, String> {
         if let Some(drive_letter) = &self.drive_letter {
             for a in &self.config.apps {
                 if a.name.eq(app) {
@@ -231,7 +231,18 @@ impl Lab {
                         .env_clear()
                         .current_dir(drive_letter.clone() + ":" + &a.work_dir)
                         .envs(self.analyze_envs(&a)?)
-                        .args(&a.args)
+                        .args({
+                            let mut all_args = a.args.clone();
+
+                            match args {
+                                Some(mut a) => {
+                                    all_args.append(&mut a);
+                                }
+                                None => {}
+                            }
+
+                            all_args
+                        })
                         .spawn()
                         .str_result()?;
 

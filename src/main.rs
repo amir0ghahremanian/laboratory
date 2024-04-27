@@ -30,14 +30,15 @@ fn main() -> Result<(), String> {
         ListApps(name) => {
             manage::list_apps(name)?;
         }
-        Run(name, app, drive_letter) => {
+        Run(name, app, drive_letter, arg_vector) => {
             manage::run(
                 name,
                 match app {
                     Some(app) => app,
                     None => { usage_and_exit!(); }
                 },
-                drive_letter
+                drive_letter,
+                arg_vector
             )?;
         }
         Change(name, image) => {
