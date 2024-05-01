@@ -8,7 +8,7 @@ mod cache {
 
     use serde::{Deserialize, Serialize};
 
-    use crate::image::{Lab, StrResult};
+    use crate::{cmd::StrResult, image::Lab};
 
     pub struct Cache {
         data: CacheData,
@@ -150,22 +150,18 @@ mod cache {
 }
 
 pub mod manage {
-    use std::{
-        env::current_dir,
-        io::{stdout, Write},
-        path::Path,
-    };
+    use std::io::{stdout, Write};
 
     use colored::Colorize;
 
-    use crate::image::{Lab, StrResult};
+    use crate::{cmd::StrResult, image::Lab};
 
     use super::cache::Cache;
 
     const CACHE_PATH: &str = ".laboratory\\Cache.toml";
 
     pub fn import_lab(image: String, config: String) -> Result<(), String> {
-        let mut lab = Lab::from_image(analyze_path(image)?);
+        let mut lab = Lab::from_image(image);
 
         lab.read_config(&config)?;
 
@@ -183,7 +179,11 @@ pub mod manage {
         print!("\n");
 
         for lab in cache {
-            print!("{} = {}\n", "name".green().bold(), lab.config.name.cyan().bold());
+            print!(
+                "{} = {}\n",
+                "name".green().bold(),
+                lab.config.name.cyan().bold()
+            );
             print!("{}\n", "--------------------------".blue().bold());
 
             if let Some(image_path) = &lab.image_path {
@@ -240,7 +240,12 @@ pub mod manage {
         Ok(())
     }
 
-    pub fn run(name: String, app: String, drive_letter: Option<String>, arg_vector: Option<Vec<String>>) -> Result<(), String> {
+    pub fn run(
+        name: String,
+        app: String,
+        drive_letter: Option<String>,
+        arg_vector: Option<Vec<String>>,
+    ) -> Result<(), String> {
         let mut cache = Cache::load(cache_path())?;
 
         let lab = cache.search(&name)?;
@@ -256,10 +261,7 @@ pub mod manage {
         // repetition is not ideal
         let lab = cache.search(&name)?;
 
-        let mut child = lab.run(
-            &app,
-            arg_vector
-        )?;
+        let mut child = lab.run(&app, arg_vector)?;
         child.wait().str_result()?;
 
         Ok(())
@@ -274,7 +276,7 @@ pub mod manage {
             return Err("Lab is mounted!".to_string());
         }
 
-        lab.expand(analyze_path(path)?)?;
+        lab.expand(path)?;
 
         cache.write()?;
 
@@ -349,7 +351,7 @@ pub mod manage {
             return Err("Lab is expanded!".to_string());
         }
 
-        lab.image_path = Some(analyze_path(image)?);
+        lab.image_path = Some(image);
 
         cache.write()?;
 
@@ -387,23 +389,6 @@ pub mod manage {
         cache.write()?;
 
         Ok(())
-    }
-
-    fn analyze_path(path_str: String) -> Result<String, String> {
-        let path = Path::new(&path_str);
-
-        if !path.has_root() {
-            let mut path = current_dir()
-                .str_result()?
-                .into_os_string()
-                .into_string()
-                .unwrap();
-            path = path + "\\" + &path_str;
-
-            return Ok(path);
-        }
-
-        Ok(path_str)
     }
 
     #[inline(always)]

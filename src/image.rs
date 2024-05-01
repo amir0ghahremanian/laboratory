@@ -1,14 +1,15 @@
 use std::{
     collections::HashMap,
-    env::{self, VarError},
+    env,
     fs::{remove_dir_all, OpenOptions},
-    io::{self, Read},
+    io::Read,
     process::{Child, Command},
 };
 
 use serde::{Deserialize, Serialize};
 use tar::{Archive, Builder};
-use toml::de::Error;
+
+use crate::cmd::StrResult;
 
 #[derive(Serialize, Deserialize)]
 pub struct Lab {
@@ -285,36 +286,5 @@ impl Lab {
     #[inline(always)]
     fn delete_volume(drive_letter: &str) -> bool {
         win_subst::del(drive_letter)
-    }
-}
-
-pub trait StrResult<T> {
-    fn str_result(self) -> Result<T, String>;
-}
-
-impl<T> StrResult<T> for Result<T, Error> {
-    fn str_result(self) -> Result<T, String> {
-        match self {
-            Ok(t) => Ok(t),
-            Err(e) => Err(e.to_string()),
-        }
-    }
-}
-
-impl<T> StrResult<T> for io::Result<T> {
-    fn str_result(self) -> Result<T, String> {
-        match self {
-            Ok(t) => Ok(t),
-            Err(e) => Err(e.to_string()),
-        }
-    }
-}
-
-impl<T> StrResult<T> for Result<T, VarError> {
-    fn str_result(self) -> Result<T, String> {
-        match self {
-            Ok(t) => Ok(t),
-            Err(e) => Err(e.to_string()),
-        }
     }
 }

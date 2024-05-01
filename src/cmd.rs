@@ -203,10 +203,23 @@ pub fn parse_args(mut args: Args) -> Result<RunOptions, String> {
     Ok(output)
 }
 
+pub trait StrResult<T, E: ToString> {
+    fn str_result(self) -> Result<T, String>;
+}
+
+impl<T, E: ToString> StrResult<T, E> for Result<T, E> {
+    fn str_result(self) -> Result<T, String> {
+        match self {
+            Ok(t) => Ok(t),
+            Err(e) => Err(e.to_string()),
+        }
+    }
+}
+
 #[inline(always)]
 pub fn print_version() {
     println!(
-r#"Laboratory v0.1.5
+r#"Laboratory v0.1.6
 Copyright (C) 2023 amir0ghahremanian
 This is free software; see the source for copying conditions.  There is NO
 warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
